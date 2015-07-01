@@ -4,10 +4,12 @@
 // Header file containing structure of the 6502 cpu
 //
 // Author: Alex Busman
-// Date: June 30, 2015
+// Date: July 1, 2015
 ///////////////////////////////////////////////////////////////////////////////
+#ifndef CPU_H
+#define CPU_H
 
-#include <stdint.h>
+#include <cstdint>
 
 #define MEM_SIZE 65536
 
@@ -52,3 +54,4 @@ private:
   // Memory map
   uint8_t _mem[MEM_SIZE];
 };
+#endif // CPU_H
