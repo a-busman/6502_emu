@@ -40,7 +40,7 @@ enum Register{
   PC,
   SR
 };
-
+using namespace std;
 class Instruction {
 public:
   /*!
@@ -61,19 +61,21 @@ public:
    * \param name Operation name (mnemonic)
    * \param opcode Opcode of Operation
    * \param cycles How many cycles operation will take
+   * \param operation Function pointer to operation this will perform
    */
   Instruction(Cpu *cpu, AddressMode mode, string name, uint8_t opcode,
               uint8_t cycles) : _cpu(cpu), _mode(mode), _operationName(name),
-                                _opcode(opcode), _cyles(cycles) {}
-  ~Instruction();
+                                _opcode(opcode), _cycles(cycles) {}
+  ~Instruction() {}
 
-private:
+  virtual uint8_t operation(uint16_t operand);
+protected:
   Cpu *_cpu;
   AddressMode _mode;
   string _operationName;
   uint8_t _opcode;
   uint8_t _cycles;
-  uint8_t (*_operation)();
-}
+
+};
 
 #endif // INSTRUCTION_H
