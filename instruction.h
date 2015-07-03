@@ -68,7 +68,7 @@ public:
                                 _opcode(opcode), _cycles(cycles) {}
   ~Instruction() {}
 
-  virtual uint8_t operation(uint16_t operand);
+  virtual uint8_t operation(uint16_t operand) = 0;
 protected:
   Cpu *_cpu;
   AddressMode _mode;
