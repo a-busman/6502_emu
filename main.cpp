@@ -2,16 +2,7 @@
 #include <cstdint>
 
 #include "cpu.h"
-#include "instruction.h"
-
-class LDA_IMM : public Instruction {
-public:
-  using Instruction::Instruction;
-  uint8_t operation(uint16_t operand) {
-    _cpu->setA(static_cast<uint8_t>(operand));
-    return 0;
-  }
-};
+#include "operation.h"
 
 int main(int argc, char *argv[]) {
   Cpu cpu;
