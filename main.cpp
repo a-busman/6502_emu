@@ -6,7 +6,7 @@
 
 int main(int argc, char *argv[]) {
   Cpu cpu;
-  LDA_IMM lda_imm(&cpu, IMM, "lda", 0xA9, 2);
-  lda_imm.operation(80);
-  cout << (int)cpu.A() << endl;
+  cpu.setA(20);
+  ADC(&cpu, static_cast<uint8_t>(20), IMM);
+  std::cout << (int)cpu.A() << std::endl;
 }

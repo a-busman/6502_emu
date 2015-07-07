@@ -4,7 +4,7 @@
 // Header file containing structure of the 6502 cpu
 //
 // Author: Alex Busman
-// Date: July 1, 2015
+// Date: July 7, 2015
 ///////////////////////////////////////////////////////////////////////////////
 #ifndef CPU_H
 #define CPU_H
@@ -38,7 +38,7 @@ public:
 
   Cpu(uint8_t mem[], uint8_t a = 0, uint8_t x = 0, uint8_t y = 0,
       uint8_t sp = 0, uint8_t pc = 0)
-      : _a(a), _x(x), _y(y), _sp(sp), _pc(pc), _cycles(0), _interrupt(false)
+      : _a(a), _x(x), _y(y), _sp(sp), _pc(pc), _interrupt(false), _cycles(0)
   {
     for (uint16_t i = 0; i < MEM_SIZE; i++) {
       _mem[i] = mem[i];
@@ -68,18 +68,24 @@ public:
   void setNegative()   { _sr |= NEGATIVE; }
   void clearNegative() { _sr &= ~NEGATIVE; }
 
-  uint8_t carry()    const { return (_sr & CARRY_MASK) >> CARRY; }
-  uint8_t zero()     const { return (_sr & ZERO_MASK) >> ZERO; }
-  uint8_t imask()    const { return (_sr & IMASK_MASK) >> IMASK; }
-  uint8_t decimal()  const { return (_sr & DECIMAL_MASK) >> DECIMAL; }
-  uint8_t break()    const { return (_sr & BREAK_MASK) >> BREAK; }
-  uint8_t overflow() const { return (_sr & OVERFLOW_MASK) >> OVERFLOW; }
-  uint8_t negative() const { return (_sr & NEGATIVE_MASK) >> NEGATIVE; }
+  uint8_t C() const { return (_sr & CARRY_MASK) >> CARRY; }
+  uint8_t Z() const { return (_sr & ZERO_MASK) >> ZERO; }
+  uint8_t I() const { return (_sr & IMASK_MASK) >> IMASK; }
+  uint8_t D() const { return (_sr & DECIMAL_MASK) >> DECIMAL; }
+  uint8_t B() const { return (_sr & BREAK_MASK) >> BREAK; }
+  uint8_t V() const { return (_sr & OVERFLOW_MASK) >> OVERFLOW; }
+  uint8_t N() const { return (_sr & NEGATIVE_MASK) >> NEGATIVE; }
 
   uint8_t  getMemByte(uint16_t address) const { return _mem[address]; }
   uint16_t getMemWord(uint16_t address) const
   {
-    return *(static_cast<uint16_t*>(_mem + address));
+    uint16_t ret;
+    if (address == MEM_SIZE - 1) {
+      ret = _mem[address] << 8;
+    } else {
+      ret = (_mem[address + 1] << 8) + _mem[address];
+    }
+    return ret;
   }
 
   void clearInterruptWaiting() { _interrupt = false; }

@@ -1,10 +1,10 @@
 ///////////////////////////////////////////////////////////////////////////////
 // operation.h
 //
-// Header file containing operation base class
+// Header file containing all operation functions
 //
 // Author: Alex Busman
-// Date: July 6, 2015
+// Date: July 7, 2015
 ///////////////////////////////////////////////////////////////////////////////
 #ifndef OPERATION_H
 #define OPERATION_H
@@ -37,7 +37,6 @@ enum Register{
 };
 
 uint8_t ADC(Cpu *cpu, uint8_t operand, AddressMode mode) {
-  uint8_t sr = cpu->SR();
   uint8_t a = cpu->A();
   uint8_t adder = 0;
 
@@ -62,9 +61,12 @@ uint8_t ADC(Cpu *cpu, uint8_t operand, AddressMode mode) {
   case IDX1_POST:
     adder = cpu->getMemByte(cpu->getMemWord(operand) + cpu->Y());
     cpu->addToCycles(5);
+    break;
+  default:
+    adder = 0;
   }
 
-  cpu->setA(a + adder + cpu->carry());
+  cpu->setA(a + adder + cpu->C());
   cpu->A() < a ? cpu->setCarry() : cpu->clearCarry();
   cpu->A() & 0x80 ? cpu->setNegative() : cpu->clearNegative();
 
@@ -81,7 +83,6 @@ uint8_t ADC(Cpu *cpu, uint8_t operand, AddressMode mode) {
 }
 
 uint8_t ADC(Cpu *cpu, uint16_t operand, AddressMode mode) {
-  uint8_t sr = cpu->SR();
   uint8_t a = cpu->A();
   uint8_t adder = 0;
 
@@ -98,9 +99,11 @@ uint8_t ADC(Cpu *cpu, uint16_t operand, AddressMode mode) {
     adder = cpu->getMemByte(operand + cpu->Y());
     cpu->addToCycles(4);
     break;
+  default:
+    adder = 0;
   }
 
-  cpu->setA(a + adder + cpu->carry());
+  cpu->setA(a + adder + cpu->C());
   cpu->A() < a ? cpu->setCarry() : cpu->clearCarry();
   cpu->A() & 0x80 ? cpu->setNegative() : cpu->clearNegative();
 
