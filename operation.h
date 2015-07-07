@@ -10,7 +10,6 @@
 #define OPERATION_H
 
 #include <cstdint>
-#include <string>
 
 #include "cpu.h"
 
@@ -22,8 +21,10 @@ enum AddressMode{
   ABS,
   REL,
   IDX1,
-  IDX2,
-  IDX1_IND
+  IDX2_X,
+  IDX2_Y,
+  IDX1_PRE,
+  IDX1_POST
 };
 
 enum Operand{
@@ -41,40 +42,70 @@ enum Register{
   SR
 };
 
-struct Instruction {
-  uint8_t opcode;
-  uint8_t cycles;
-  AddressMode mode;
+uint8_t ADC(Cpu *cpu, uint8_t operand, AddressMode mode) {
+  uint8_t sr = cpu->SR();
+  uint8_t a = cpu->A();
+  uint8_t adder = 0;
 
-  Instruction() : opcode(0), cycles(0), mode(ACC) {}
-  Instruction(uint8_t op, uint8_t cyc, AddressMode m) : opcode(op), cycles(cyc),
-              mode(m) {}
-};
-using namespace std;
-class Operation {
-public:
-  /*!
-   * \brief Default constructor
-   */
-  Operation() : _cpu(NULL), _operation(NULL) {}
-  /*!
-   * \brief Constructor with just Cpu
-   * \param cpu Pointer to cpu object
-   */
-  Operation(Cpu *cpu) : _cpu(cpu), _operation(NULL) {}
-  /*!
-   * \brief Constructor with all initializers
-   * \param cpu Pointer to cpu object
-   * \param operation function pointer to operation
-   */
-  Operation(Cpu *cpu, uint8_t (*operation)(uint16_t operand)) : _cpu(cpu),
-            _operation(operation){}
-  ~Operation() {}
+  switch(mode) {
+  case IMM:
+    adder = operand;
+    cpu->addToCycles(2);
+    break;
+  case ZER:
+    adder = cpu->getMemByte(operand);
+    cpu->addToCycles(3);
+    break;
+  case IDX1:
+    adder = cpu->getMemByte(operand + cpu->X());
+    cpu->addToCycles(4);
+    break;
+  case IDX1_PRE:
+    adder = cpu->getMemByte(cpu->getMemWord(static_cast<uint8_t>(operand +
+                                                                 cpu->X())));
+    cpu->addToCycles(6);
+    break;
+  case IDX1_POST:
+    adder = cpu->getMemByte(cpu->getMemWord(operand) + cpu->Y());
+    cpu->addToCycles(5);
+  }
 
-private:
-  Cpu *_cpu;
-  Instruction *_instructions;
-  uint8_t (*_operation)(uint16_t operand);
-};
+  cpu->setA(a + adder + cpu->SR() & CARRY ? 1 : 0);
+  cpu->A() < a ? cpu->setCarry() : cpu->clearCarry();
+  cpu->A() & 0x80 ? cpu->setNegative() : cpu->clearNegative();
+  (a > 127 && operand > 127 && cpu->A() > 127) ||
+  (a < 128 && operand < 128 && cpu->A() < 128) ?
+  cpu->clearOverflow() : cpu->setOverflow();
+  cpu->A() ? cpu->clearZero() : cpu->setZero();
+
+  return cpu->SR();
+}
+
+uint8_t ADC(Cpu *cpu, uint16_t operand, AddressMode mode) {
+  uint8_t sr = cpu->SR();
+  uint8_t a = cpu->A();
+  uint8_t adder = 0;
+  switch(mode) {
+  case ABS:
+    adder = cpu->getMemByte(operand);
+    cpu->addToCycles(4);
+    break;
+  case IDX2_X:
+    adder = cpu->getMemByte(operand + cpu->X());
+    cpu->addToCycles(4);
+    break;
+  case IDX2_Y:
+    adder = cpu->getMemByte(operand + cpu->Y());
+    cpu->addToCycles(4);
+    break;
+  }
+  cpu->setA(a + adder + cpu->SR() & CARRY ? 1 : 0);
+  cpu->A() < a ? cpu->setCarry() : cpu->clearCarry();
+  cpu->A() & 0x80 ? cpu->setNegative() : cpu->clearNegative();
+  (a > 127 && operand > 127 && cpu->A() > 127) ||
+  (a < 128 && operand < 128 && cpu->A() < 128) ?
+  cpu->clearOverflow() : cpu->setOverflow();
+  cpu->A() ? cpu->clearZero() : cpu->setZero();
+}
 
 #endif // OPERATION_H
