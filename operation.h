@@ -27,12 +27,6 @@ enum AddressMode{
   IDX1_POST
 };
 
-enum Operand{
-  NONE,
-  EIGHT_BIT,
-  SIXTEEN_BIT
-};
-
 enum Register{
   A,
   X,
@@ -70,14 +64,19 @@ uint8_t ADC(Cpu *cpu, uint8_t operand, AddressMode mode) {
     cpu->addToCycles(5);
   }
 
-  cpu->setA(a + adder + cpu->SR() & CARRY ? 1 : 0);
+  cpu->setA(a + adder + cpu->carry());
   cpu->A() < a ? cpu->setCarry() : cpu->clearCarry();
   cpu->A() & 0x80 ? cpu->setNegative() : cpu->clearNegative();
+
   (a > 127 && operand > 127 && cpu->A() > 127) ||
-  (a < 128 && operand < 128 && cpu->A() < 128) ?
+  (a < 128 && operand < 128 && cpu->A() < 128) ||
+  (a > 127 && operand < 128)                   ||
+  (a < 128 && operand > 127)                   ?
   cpu->clearOverflow() : cpu->setOverflow();
+
   cpu->A() ? cpu->clearZero() : cpu->setZero();
 
+  cpu->incPC(2);
   return cpu->SR();
 }
 
@@ -85,6 +84,7 @@ uint8_t ADC(Cpu *cpu, uint16_t operand, AddressMode mode) {
   uint8_t sr = cpu->SR();
   uint8_t a = cpu->A();
   uint8_t adder = 0;
+
   switch(mode) {
   case ABS:
     adder = cpu->getMemByte(operand);
@@ -99,13 +99,21 @@ uint8_t ADC(Cpu *cpu, uint16_t operand, AddressMode mode) {
     cpu->addToCycles(4);
     break;
   }
-  cpu->setA(a + adder + cpu->SR() & CARRY ? 1 : 0);
+
+  cpu->setA(a + adder + cpu->carry());
   cpu->A() < a ? cpu->setCarry() : cpu->clearCarry();
   cpu->A() & 0x80 ? cpu->setNegative() : cpu->clearNegative();
+
   (a > 127 && operand > 127 && cpu->A() > 127) ||
-  (a < 128 && operand < 128 && cpu->A() < 128) ?
+  (a < 128 && operand < 128 && cpu->A() < 128) ||
+  (a > 127 && operand < 128)                   ||
+  (a < 128 && operand > 127)                   ?
   cpu->clearOverflow() : cpu->setOverflow();
+
   cpu->A() ? cpu->clearZero() : cpu->setZero();
+
+  cpu->incPC(3);
+  return cpu->SR();
 }
 
 #endif // OPERATION_H

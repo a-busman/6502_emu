@@ -13,18 +13,28 @@
 
 #define MEM_SIZE 65536
 
-#define CARRY    0x01
-#define ZERO     0x02
-#define IMASK    0x04
-#define DECIMAL  0x08
-#define BREAK    0x10
-#define OVERFLOW 0x40
-#define NEGATIVE 0x80
+#define CARRY_MASK    0x01
+#define ZERO_MASK     0x02
+#define IMASK_MASK    0x04
+#define DECIMAL_MASK  0x08
+#define BREAK_MASK    0x10
+#define OVERFLOW_MASK 0x40
+#define NEGATIVE_MASK 0x80
+
+#define CARRY    0
+#define ZERO     1
+#define IMASK    2
+#define DECIMAL  3
+#define BREAK    4
+#define OVERFLOW 6
+#define NEGATIVE 7
 
 class Cpu {
 public:
   Cpu() : _a(0), _x(0), _y(0), _sp(0), _pc(0), _interrupt(false), _cycles(0)
-  { clearMem(); }
+  {
+    clearMem();
+  }
 
   Cpu(uint8_t mem[], uint8_t a = 0, uint8_t x = 0, uint8_t y = 0,
       uint8_t sp = 0, uint8_t pc = 0)
@@ -58,9 +68,18 @@ public:
   void setNegative()   { _sr |= NEGATIVE; }
   void clearNegative() { _sr &= ~NEGATIVE; }
 
+  uint8_t carry()    const { return (_sr & CARRY_MASK) >> CARRY; }
+  uint8_t zero()     const { return (_sr & ZERO_MASK) >> ZERO; }
+  uint8_t imask()    const { return (_sr & IMASK_MASK) >> IMASK; }
+  uint8_t decimal()  const { return (_sr & DECIMAL_MASK) >> DECIMAL; }
+  uint8_t break()    const { return (_sr & BREAK_MASK) >> BREAK; }
+  uint8_t overflow() const { return (_sr & OVERFLOW_MASK) >> OVERFLOW; }
+  uint8_t negative() const { return (_sr & NEGATIVE_MASK) >> NEGATIVE; }
+
   uint8_t  getMemByte(uint16_t address) const { return _mem[address]; }
-  uint16_t getMemWord(uint16_t address) const {
-    return static_cast<uint16_t> (*(&_mem[address]));
+  uint16_t getMemWord(uint16_t address) const
+  {
+    return *(static_cast<uint16_t*>(_mem + address));
   }
 
   void clearInterruptWaiting() { _interrupt = false; }
@@ -71,7 +90,8 @@ public:
     for (uint32_t i = 0; i < MEM_SIZE; i++)
       _mem[i] = 0;
   }
-  void incPC()                     { _pc++; }
+  uint16_t incPC()                 { _pc++; return _pc; }
+  uint16_t incPC(uint8_t add)      { _pc += add; return _pc; }
   void addToCycles(uint8_t cycles) { _cycles += cycles; }
 
   uint8_t  A()                const { return _a; }
