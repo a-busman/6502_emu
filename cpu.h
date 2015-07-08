@@ -76,6 +76,7 @@ public:
   uint8_t V() const { return (_sr & OVERFLOW_MASK) >> OVERFLOW; }
   uint8_t N() const { return (_sr & NEGATIVE_MASK) >> NEGATIVE; }
 
+  uint8_t* getMemBase() { return _mem; }
   uint8_t  getMemByte(uint16_t address) const { return _mem[address]; }
   uint16_t getMemWord(uint16_t address) const
   {
@@ -86,6 +87,14 @@ public:
       ret = (_mem[address + 1] << 8) + _mem[address];
     }
     return ret;
+  }
+
+
+  void setMem(uint16_t address, uint8_t value) { _mem[address] = value; }
+  void setMem(uint16_t address, uint16_t value)
+  {
+    _mem[address + 1] = static_cast<uint8_t>(value);
+    _mem[address] = static_cast<uint8_t>(value >> 8);
   }
 
   void clearInterruptWaiting() { _interrupt = false; }
