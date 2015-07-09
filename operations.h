@@ -1,13 +1,13 @@
 ///////////////////////////////////////////////////////////////////////////////
-// operation.h
+// operations.h
 //
 // Header file containing all operation functions
 //
 // Author: Alex Busman
-// Date: July 7, 2015
+// Date: July 8, 2015
 ///////////////////////////////////////////////////////////////////////////////
-#ifndef OPERATION_H
-#define OPERATION_H
+#ifndef OPERATIONS_H
+#define OPERATIONS_H
 
 #include <cstdint>
 
@@ -27,7 +27,7 @@ enum AddressMode {
   IDX1_POST
 };
 
-uint8_t ADC(Cpu *cpu, uint8_t operand, AddressMode mode)
+uint8_t ADC(Cpu *cpu, uint16_t operand, AddressMode mode)
 {
   uint8_t a = cpu->A();
   uint8_t adder = 0;
@@ -53,6 +53,21 @@ uint8_t ADC(Cpu *cpu, uint8_t operand, AddressMode mode)
     adder = cpu->getMemByte(cpu->getMemWord(operand) + cpu->Y());
     cpu->addToCycles(5);
     break;
+  case ABS:
+    adder = cpu->getMemByte(operand);
+    cpu->addToCycles(4);
+    cpu->incPC();
+    break;
+  case IDX2_X:
+    adder = cpu->getMemByte(static_cast<int16_t>(operand) + cpu->X());
+    cpu->addToCycles(4);
+    cpu->incPC();
+    break;
+  case IDX2_Y:
+    adder = cpu->getMemByte(static_cast<int16_t>(operand) + cpu->Y());
+    cpu->addToCycles(4);
+    cpu->incPC();
+    break;
   default:
     adder = 0;
   }
@@ -71,43 +86,7 @@ uint8_t ADC(Cpu *cpu, uint8_t operand, AddressMode mode)
   return cpu->SR();
 }
 
-uint8_t ADC(Cpu *cpu, uint16_t operand, AddressMode mode)
-{
-  uint8_t a = cpu->A();
-  uint8_t adder = 0;
-
-  switch(mode) {
-  case ABS:
-    adder = cpu->getMemByte(operand);
-    cpu->addToCycles(4);
-    break;
-  case IDX2_X:
-    adder = cpu->getMemByte(static_cast<int16_t>(operand) + cpu->X());
-    cpu->addToCycles(4);
-    break;
-  case IDX2_Y:
-    adder = cpu->getMemByte(static_cast<int16_t>(operand) + cpu->Y());
-    cpu->addToCycles(4);
-    break;
-  default:
-    adder = 0;
-  }
-
-  cpu->setA(a + adder + cpu->C());
-  cpu->A() < a ? cpu->setCarry() : cpu->clearCarry();
-  cpu->A() & 0x80 ? cpu->setNegative() : cpu->clearNegative();
-
-  (a > 127 && adder > 127 && cpu->A() < 128) ||
-  (a < 128 && adder < 128 && cpu->A() > 127) ?
-  cpu->setOverflow() : cpu->clearOverflow();
-
-  cpu->A() ? cpu->clearZero() : cpu->setZero();
-
-  cpu->incPC(3);
-  return cpu->SR();
-}
-
-uint8_t AND(Cpu *cpu, uint8_t operand, AddressMode mode)
+uint8_t AND(Cpu *cpu, uint16_t operand, AddressMode mode)
 {
   uint8_t a = cpu->A();
   uint8_t ander = 0;
@@ -133,6 +112,21 @@ uint8_t AND(Cpu *cpu, uint8_t operand, AddressMode mode)
     ander = cpu->getMemByte(cpu->getMemWord(operand) + cpu->Y());
     cpu->addToCycles(5);
     break;
+  case ABS:
+    ander = cpu->getMemByte(operand);
+    cpu->addToCycles(4);
+    cpu->incPC();
+    break;
+  case IDX2_X:
+    ander = cpu->getMemByte(static_cast<int16_t>(operand) + cpu->X());
+    cpu->addToCycles(4);
+    cpu->incPC();
+    break;
+  case IDX2_Y:
+    ander = cpu->getMemByte(static_cast<int16_t>(operand) + cpu->Y());
+    cpu->addToCycles(4);
+    cpu->incPC();
+    break;
   default:
     ander = 0;
   }
@@ -142,36 +136,6 @@ uint8_t AND(Cpu *cpu, uint8_t operand, AddressMode mode)
   cpu->A() ? cpu->clearZero() : cpu->setZero();
 
   cpu->incPC(2);
-  return cpu->SR();
-}
-
-uint8_t AND(Cpu *cpu, uint16_t operand, AddressMode mode)
-{
-  uint8_t a = cpu->A();
-  uint8_t ander = 0;
-
-  switch(mode) {
-  case ABS:
-    ander = cpu->getMemByte(operand);
-    cpu->addToCycles(4);
-    break;
-  case IDX2_X:
-    ander = cpu->getMemByte(static_cast<int16_t>(operand) + cpu->X());
-    cpu->addToCycles(4);
-    break;
-  case IDX2_Y:
-    ander = cpu->getMemByte(static_cast<int16_t>(operand) + cpu->Y());
-    cpu->addToCycles(4);
-    break;
-  default:
-    ander = 0;
-  }
-  cpu->setA(a & ander);
-
-  cpu->A() & 0x80 ? cpu->setNegative() : cpu->clearNegative();
-  cpu->A() ? cpu->clearZero() : cpu->setZero();
-
-  cpu->incPC(3);
   return cpu->SR();
 }
 
@@ -189,7 +153,7 @@ uint8_t ASL(Cpu *cpu)
   return cpu->SR();
 }
 
-uint8_t ASL(Cpu *cpu, uint8_t operand, AddressMode mode)
+uint8_t ASL(Cpu *cpu, uint16_t operand, AddressMode mode)
 {
   uint8_t* memBase = cpu->getMemBase();
   uint8_t offset = 0;
@@ -202,9 +166,18 @@ uint8_t ASL(Cpu *cpu, uint8_t operand, AddressMode mode)
     offset = static_cast<int8_t>(operand) + cpu->X();
     cpu->addToCycles(6);
     break;
+  case ABS:
+    offset = operand;
+    cpu->addToCycles(6);
+    cpu->incPC();
+    break;
+  case IDX2_X:
+    offset = static_cast<int16_t>(operand) + cpu->X();
+    cpu->addToCycles(7);
+    cpu->incPC();
+    break;
   default:
     offset = 0;
-    break;
   }
   *(memBase + offset) & 0x80 ? cpu->setCarry() : cpu->clearCarry();
   *(memBase + offset) <<= 1;
@@ -213,33 +186,6 @@ uint8_t ASL(Cpu *cpu, uint8_t operand, AddressMode mode)
   *(memBase + offset) ? cpu->clearZero() : cpu->setZero();
 
   cpu->incPC(2);
-  return cpu->SR();
-}
-
-uint8_t ASL(Cpu *cpu, uint16_t operand, AddressMode mode)
-{
-  uint8_t* memBase = cpu->getMemBase();
-  uint16_t offset = 0;
-  switch (mode) {
-  case ABS:
-    offset = operand;
-    cpu->addToCycles(6);
-    break;
-  case IDX2_X:
-    offset = static_cast<int16_t>(operand) + cpu->X();
-    cpu->addToCycles(7);
-    break;
-  default:
-    offset = 0;
-    break;
-  }
-  *(memBase + offset) & 0x80 ? cpu->setCarry() : cpu->clearCarry();
-  *(memBase + offset) <<= 1;
-
-  *(memBase + offset) & 0x80 ? cpu->setNegative() : cpu->clearNegative();
-  *(memBase + offset) ? cpu->clearZero() : cpu->setZero();
-
-  cpu->incPC(3);
   return cpu->SR();
 }
 
@@ -261,12 +207,23 @@ void BEQ(Cpu *cpu, int8_t offset)
   cpu->Z() ? cpu->setPC(cpu->PC() + offset) : cpu->incPC(2);
 }
 
-uint8_t BIT(Cpu *cpu, uint8_t operand)
+uint8_t BIT(Cpu *cpu, uint16_t operand, AddressMode mode)
 {
   uint8_t a = cpu->A();
   uint8_t ander = cpu->getMemByte(operand);
   uint8_t res = a & ander;
-  cpu->addToCycles(3);
+  switch(mode) {
+  case ZER:
+    cpu->addToCycles(3);
+    break;
+  case ABS:
+    cpu->addToCycles(4);
+    cpu->incPC();
+    break;
+  default:
+    break;
+  }
+
 
   res & 0x80 ? cpu->setNegative() : cpu->clearNegative();
 
@@ -276,24 +233,6 @@ uint8_t BIT(Cpu *cpu, uint8_t operand)
 
   res ? cpu->clearZero() : cpu->setZero();
   cpu->incPC(2);
-  return cpu->SR();
-}
-
-uint8_t BIT(Cpu *cpu, uint16_t operand)
-{
-  uint8_t a = cpu->A();
-  uint8_t ander = cpu->getMemByte(operand);
-  uint8_t res = a & ander;
-  cpu->addToCycles(4);
-
-  res & 0x80 ? cpu->setNegative() : cpu->clearNegative();
-
-  (a > 127 && ander > 127 && res < 128) ||
-  (a < 128 && ander < 128 && res > 127) ?
-  cpu->setOverflow() : cpu->clearOverflow();
-
-  res ? cpu->clearZero() : cpu->setZero();
-  cpu->incPC(3);
   return cpu->SR();
 }
 
@@ -367,7 +306,7 @@ uint8_t CLV(Cpu *cpu)
   return cpu->SR();
 }
 
-uint8_t CMP(Cpu *cpu, uint8_t operand, AddressMode mode)
+uint8_t CMP(Cpu *cpu, uint16_t operand, AddressMode mode)
 {
   uint8_t a = cpu->A();
   uint8_t comparitor = 0;
@@ -394,9 +333,23 @@ uint8_t CMP(Cpu *cpu, uint8_t operand, AddressMode mode)
     comparitor = cpu->getMemByte(cpu->getMemWord(operand) + cpu->Y());
     cpu->addToCycles(5);
     break;
+  case ABS:
+    comparitor = cpu->getMemByte(operand);
+    cpu->addToCycles(4);
+    cpu->incPC();
+    break;
+  case IDX2_X:
+    comparitor = cpu->getMemByte(static_cast<int16_t>(operand) + cpu->X());
+    cpu->addToCycles(4);
+    cpu->incPC();
+    break;
+  case IDX2_Y:
+    comparitor = cpu->getMemByte(static_cast<int16_t>(operand) + cpu->Y());
+    cpu->addToCycles(4);
+    cpu->incPC();
+    break;
   default:
     comparitor = 0;
-    break;
   }
   res = a - comparitor;
 
@@ -411,43 +364,7 @@ uint8_t CMP(Cpu *cpu, uint8_t operand, AddressMode mode)
   return cpu->SR();
 }
 
-uint8_t CMP(Cpu *cpu, uint16_t operand, AddressMode mode)
-{
-  uint8_t a = cpu->A();
-  uint8_t comparitor = 0;
-  uint8_t res = 0;
-
-  switch(mode) {
-  case ABS:
-    comparitor = cpu->getMemByte(operand);
-    cpu->addToCycles(4);
-    break;
-  case IDX2_X:
-    comparitor = cpu->getMemByte(static_cast<int16_t>(operand) + cpu->X());
-    cpu->addToCycles(4);
-    break;
-  case IDX2_Y:
-    comparitor = cpu->getMemByte(static_cast<int16_t>(operand) + cpu->Y());
-    cpu->addToCycles(4);
-    break;
-  default:
-    comparitor = 0;
-    break;
-  }
-  res = a - comparitor;
-
-  res & 0x80 ? cpu->setNegative() : cpu->clearNegative();
-
-  (a > 127 && comparitor > 127 && res < 128) ||
-  (a < 128 && comparitor < 128 && res > 127) ?
-  cpu->setOverflow() : cpu->clearOverflow();
-
-  res ? cpu->clearZero() : cpu->setZero();
-  cpu->incPC(3);
-  return cpu->SR();
-}
-
-uint8_t CPX(Cpu *cpu, uint8_t operand, AddressMode mode)
+uint8_t CPX(Cpu *cpu, uint16_t operand, AddressMode mode)
 {
   uint8_t x = cpu->X();
   uint8_t comparitor = 0;
@@ -462,9 +379,12 @@ uint8_t CPX(Cpu *cpu, uint8_t operand, AddressMode mode)
     comparitor = cpu->getMemByte(operand);
     cpu->addToCycles(3);
     break;
+  case ABS:
+    comparitor = cpu->getMemByte(operand);
+    cpu->addToCycles(4);
+    cpu->incPC();
   default:
     comparitor = 0;
-    break;
   }
   res = x - comparitor;
 
@@ -479,26 +399,7 @@ uint8_t CPX(Cpu *cpu, uint8_t operand, AddressMode mode)
   return cpu->SR();
 }
 
-uint8_t CPX(Cpu *cpu, uint16_t operand)
-{
-  uint8_t x = cpu->X();
-  uint8_t comparitor = cpu->getMemByte(operand);
-  uint8_t res = x - comparitor;
-
-  cpu->addToCycles(4);
-
-  res & 0x80 ? cpu->setNegative() : cpu->clearNegative();
-
-  (x > 127 && comparitor > 127 && res < 128) ||
-  (x < 128 && comparitor < 128 && res > 127) ?
-  cpu->setOverflow() : cpu->clearOverflow();
-
-  res ? cpu->clearZero() : cpu->setZero();
-  cpu->incPC(3);
-  return cpu->SR();
-}
-
-uint8_t CPY(Cpu *cpu, uint8_t operand, AddressMode mode)
+uint8_t CPY(Cpu *cpu, uint16_t operand, AddressMode mode)
 {
   uint8_t y = cpu->Y();
   uint8_t comparitor = 0;
@@ -513,9 +414,12 @@ uint8_t CPY(Cpu *cpu, uint8_t operand, AddressMode mode)
     comparitor = cpu->getMemByte(operand);
     cpu->addToCycles(3);
     break;
+  case ABS:
+    comparitor = cpu->getMemByte(operand);
+    cpu->addToCycles(4);
+    cpu->incPC();
   default:
     comparitor = 0;
-    break;
   }
   res = y - comparitor;
 
@@ -530,22 +434,59 @@ uint8_t CPY(Cpu *cpu, uint8_t operand, AddressMode mode)
   return cpu->SR();
 }
 
-uint8_t CPY(Cpu *cpu, uint16_t operand)
+uint8_t DEC(Cpu *cpu, uint16_t operand, AddressMode mode)
 {
-  uint8_t y = cpu->Y();
-  uint8_t comparitor = cpu->getMemByte(operand);
-  uint8_t res = y - comparitor;
+  uint8_t address = 0;
+  uint8_t *memBase = cpu->getMemBase();
 
-  cpu->addToCycles(4);
+  switch(mode) {
+  case ZER:
+    address = operand;
+    cpu->addToCycles(5);
+    break;
+  case IDX1:
+    address = static_cast<int8_t>(operand) + cpu->X();
+    cpu->addToCycles(6);
+    break;
+  case ABS:
+    address = operand;
+    cpu->addToCycles(6);
+    cpu->incPC();
+    break;
+  case IDX2_X:
+    address = static_cast<int16_t>(operand) + cpu->X();
+    cpu->addToCycles(7);
+    cpu->incPC();
+    break;
+  default:
+    address = 0;
+  }
 
-  res & 0x80 ? cpu->setNegative() : cpu->clearNegative();
+  *(memBase + address) -= 1;
 
-  (y > 127 && comparitor > 127 && res < 128) ||
-  (y < 128 && comparitor < 128 && res > 127) ?
-  cpu->setOverflow() : cpu->clearOverflow();
-
-  res ? cpu->clearZero() : cpu->setZero();
-  cpu->incPC(3);
+  *(memBase + address) & 0x80 ? cpu->setNegative() : cpu->clearNegative();
+  *(memBase + address) ? cpu->clearZero() : cpu->setZero();
+  cpu->incPC(2);
   return cpu->SR();
 }
-#endif // OPERATION_H
+
+uint8_t DEX(Cpu *cpu)
+{
+  cpu->setX(cpu->X() - 1);
+  cpu->addToCycles(2);
+  cpu->X() & 0x80 ? cpu->setNegative() : cpu->clearNegative();
+  cpu->X() ? cpu->clearZero() : cpu->setZero();
+  cpu->incPC();
+  return cpu->SR();
+}
+
+uint8_t DEY(Cpu *cpu)
+{
+  cpu->setY(cpu->Y() - 1);
+  cpu->addToCycles(2);
+  cpu->Y() & 0x80 ? cpu->setNegative() : cpu->clearNegative();
+  cpu->Y() ? cpu->clearZero() : cpu->setZero();
+  cpu->incPC();
+  return cpu->SR();
+}
+#endif // OPERATIONS_H

@@ -2,7 +2,7 @@
 #include <cstdint>
 
 #include "cpu.h"
-#include "operation.h"
+#include "operations.h"
 
 int main(int argc, char *argv[]) {
   Cpu cpu;
