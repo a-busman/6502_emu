@@ -13,6 +13,8 @@
 
 #define MEM_SIZE 65536
 
+#define INTERRUPT_VECTOR 0xFFFE
+
 #define CARRY_MASK    0x01
 #define ZERO_MASK     0x02
 #define IMASK_MASK    0x04
@@ -89,6 +91,7 @@ public:
     return ret;
   }
 
+  void writeToStack(uint8_t data) { _mem[_sp] = data; }
 
   void setMem(uint16_t address, uint8_t value) { _mem[address] = value; }
   void setMem(uint16_t address, uint16_t value)
