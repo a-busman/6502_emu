@@ -4,7 +4,7 @@
 // Header file containing structure of the 6502 cpu
 //
 // Author: Alex Busman
-// Date: July 7, 2015
+// Date: July 9, 2015
 ///////////////////////////////////////////////////////////////////////////////
 #ifndef CPU_H
 #define CPU_H
@@ -13,7 +13,9 @@
 
 #define MEM_SIZE 65536
 
-#define INTERRUPT_VECTOR 0xFFFE
+#define IRQ_BRK_IV    0xFFFE
+#define RESET_IV      0xFFFC
+#define NMI_IV        0xFFFA
 
 #define CARRY_MASK    0x01
 #define ZERO_MASK     0x02
@@ -53,6 +55,7 @@ public:
   void setX(uint8_t x)   { _x = x; }
   void setY(uint8_t y)   { _y = y; }
   void setSP(uint8_t sp) { _sp = sp; }
+  void setSR(uint8_t sr) { _sr = sr; }
   void setPC(uint8_t pc) { _pc = pc; }
 
   void setCarry()      { _sr |= CARRY; }

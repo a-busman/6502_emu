@@ -4,7 +4,7 @@
 // Header file containing all operation functions
 //
 // Author: Alex Busman
-// Date: July 8, 2015
+// Date: July 9, 2015
 ///////////////////////////////////////////////////////////////////////////////
 #ifndef OPERATIONS_H
 #define OPERATIONS_H
@@ -264,7 +264,7 @@ void BRK(Cpu *cpu) {
   cpu->writeToStack(cpu->SR() | BREAK_MASK);
   cpu->setSP(cpu->SP() - 1);
   cpu->addToCycles(7);
-  cpu->setPC(cpu->getMemWord(INTERRUPT_VECTOR));
+  cpu->setPC(cpu->getMemWord(IRQ_BRK_IV));
 }
 
 void BVC(Cpu *cpu, int8_t offset)
@@ -890,6 +890,386 @@ uint8_t PLP(Cpu *cpu)
   cpu->setSR(cpu->getMemByte(cpu->SP()));
 
   cpu->addToCycles(4);
+  cpu->incPC();
+  return cpu->SR();
+}
+
+uint8_t ROL(Cpu *cpu)
+{
+  uint8_t c = cpu->C();
+  uint8_t a = cpu->A();
+
+  a & 0x80 ? cpu->setCarry() : cpu->clearCarry();
+  cpu->setA((a << 1) | c);
+
+  cpu->A() & 0x80 ? cpu->setNegative() : cpu->clearNegative();
+  cpu->A() ? cpu->clearZero() : cpu->setZero();
+
+  cpu->addToCycles(2);
+  cpu->incPC();
+  return cpu->SR();
+}
+
+uint8_t ROL(Cpu *cpu, uint16_t operand, AddressMode mode)
+{
+  uint8_t c = cpu->C();
+  uint16_t offset = 0;
+  uint8_t *memBase = cpu->getMemBase();
+
+  switch(mode) {
+  case ZER:
+    offset = operand;
+    cpu->addToCycles(5);
+    break;
+  case IDX1:
+    offset = static_cast<int8_t>(operand) + cpu->X();
+    cpu->addToCycles(6);
+    break;
+  case ABS:
+    offset = operand;
+    cpu->addToCycles(6);
+    cpu->incPC();
+    break;
+  case IDX2_X:
+    offset = static_cast<int16_t>(operand) + cpu->X();
+    cpu->addToCycles(7);
+    cpu->incPC();
+    break;
+  default:
+    offset = 0;
+  }
+
+  *(memBase + offset) & 0x80 ? cpu->setCarry() : cpu->clearCarry();
+  *(memBase + offset) = (*(memBase + offset) << 1) | c;
+
+  *(memBase + offset) & 0x80 ? cpu->setNegative() : cpu->clearNegative();
+  *(memBase + offset) ? cpu->clearZero() : cpu->setZero();
+
+  cpu->incPC(2);
+  return cpu->SR();
+}
+
+uint8_t ROR(Cpu *cpu)
+{
+  uint8_t c = cpu->C();
+  uint8_t a = cpu->A();
+
+  a & 0x01 ? cpu->setCarry() : cpu->clearCarry();
+  cpu->setA((a >> 1) | (c << 7));
+
+  cpu->A() & 0x80 ? cpu->setNegative() : cpu->clearNegative();
+  cpu->A() ? cpu->clearZero() : cpu->setZero();
+
+  cpu->addToCycles(2);
+  cpu->incPC();
+  return cpu->SR();
+}
+
+uint8_t ROR(Cpu *cpu, uint16_t operand, AddressMode mode)
+{
+  uint8_t c = cpu->C();
+  uint16_t offset = 0;
+  uint8_t *memBase = cpu->getMemBase();
+
+  switch(mode) {
+  case ZER:
+    offset = operand;
+    cpu->addToCycles(5);
+    break;
+  case IDX1:
+    offset = static_cast<int8_t>(operand) + cpu->X();
+    cpu->addToCycles(6);
+    break;
+  case ABS:
+    offset = operand;
+    cpu->addToCycles(6);
+    cpu->incPC();
+    break;
+  case IDX2_X:
+    offset = static_cast<int16_t>(operand) + cpu->X();
+    cpu->addToCycles(7);
+    cpu->incPC();
+    break;
+  default:
+    offset = 0;
+  }
+
+  *(memBase + offset) & 0x01 ? cpu->setCarry() : cpu->clearCarry();
+  *(memBase + offset) = (*(memBase + offset) >> 1) | (c << 7);
+
+  *(memBase + offset) & 0x80 ? cpu->setNegative() : cpu->clearNegative();
+  *(memBase + offset) ? cpu->clearZero() : cpu->setZero();
+
+  cpu->incPC(2);
+  return cpu->SR();
+}
+
+uint8_t RTI(Cpu *cpu)
+{
+  uint16_t returnAddress = 0;
+  cpu->setSP(cpu->SP() + 1);
+  cpu->setSR(cpu->getMemByte(cpu->SP()));
+  cpu->setSP(cpu->SP() + 1);
+  returnAddress |= cpu->getMemByte(cpu->SP());
+  cpu->setSP(cpu->SP() + 1);
+  returnAddress |= static_cast<uint16_t>(cpu->getMemByte(cpu->SP())) << 8;
+  cpu->setPC(returnAddress);
+  cpu->addToCycles(6);
+  return cpu->SR();
+}
+
+void RTS(Cpu *cpu)
+{
+  uint16_t returnAddress = 0;
+  cpu->setSP(cpu->SP() + 1);
+  returnAddress |= cpu->getMemByte(cpu->SP());
+  cpu->setSP(cpu->SP() + 1);
+  returnAddress |= static_cast<uint16_t>(cpu->getMemByte(cpu->SP())) << 8;
+  cpu->setPC(returnAddress + 1);
+  cpu->addToCycles(6);
+}
+
+uint8_t SBC(Cpu *cpu, uint16_t operand, AddressMode mode)
+{
+  uint8_t a = cpu->A();
+  uint8_t subber = 0;
+
+  switch(mode) {
+  case IMM:
+    subber = operand;
+    cpu->addToCycles(2);
+    break;
+  case ZER:
+    subber = cpu->getMemByte(operand);
+    cpu->addToCycles(3);
+    break;
+  case IDX1:
+    subber = cpu->getMemByte(static_cast<int8_t>(operand) + cpu->X());
+    cpu->addToCycles(4);
+    break;
+  case IDX1_PRE:
+    subber = cpu->getMemByte(cpu->getMemWord(operand + cpu->X()));
+    cpu->addToCycles(6);
+    break;
+  case IDX1_POST:
+    subber = cpu->getMemByte(cpu->getMemWord(operand) + cpu->Y());
+    cpu->addToCycles(5);
+    break;
+  case ABS:
+    subber = cpu->getMemByte(operand);
+    cpu->addToCycles(4);
+    cpu->incPC();
+    break;
+  case IDX2_X:
+    subber = cpu->getMemByte(static_cast<int16_t>(operand) + cpu->X());
+    cpu->addToCycles(4);
+    cpu->incPC();
+    break;
+  case IDX2_Y:
+    subber = cpu->getMemByte(static_cast<int16_t>(operand) + cpu->Y());
+    cpu->addToCycles(4);
+    cpu->incPC();
+    break;
+  default:
+    subber = 0;
+  }
+
+  cpu->setA(a - subber - cpu->C());
+  cpu->A() > a ? cpu->setCarry() : cpu->clearCarry();
+  cpu->A() & 0x80 ? cpu->setNegative() : cpu->clearNegative();
+
+  (a > 127 && subber > 127 && cpu->A() < 128) ||
+  (a < 128 && subber < 128 && cpu->A() > 127) ?
+  cpu->setOverflow() : cpu->clearOverflow();
+
+  cpu->A() ? cpu->clearZero() : cpu->setZero();
+
+  cpu->incPC(2);
+  return cpu->SR();
+}
+
+uint8_t SEC(Cpu *cpu)
+{
+  cpu->setCarry();
+  cpu->addToCycles(2);
+  cpu->incPC();
+  return cpu->SR();
+}
+
+uint8_t SED(Cpu *cpu)
+{
+  cpu->setDecimal();
+  cpu->addToCycles(2);
+  cpu->incPC();
+  return cpu->SR();
+}
+
+uint8_t SEI(Cpu *cpu)
+{
+  cpu->setIMask();
+  cpu->addToCycles(2);
+  cpu->incPC();
+  return cpu->SR();
+}
+
+void STA(Cpu *cpu, uint16_t operand, AddressMode mode)
+{
+  uint16_t offset = 0;
+  uint8_t *memBase = cpu->getMemBase();
+
+  switch(mode) {
+  case ZER:
+    offset = operand;
+    cpu->addToCycles(3);
+    break;
+  case IDX1:
+    offset = static_cast<int8_t>(operand) + cpu->X();
+    cpu->addToCycles(4);
+    break;
+  case IDX1_PRE:
+    offset = cpu->getMemWord(operand + cpu->X());
+    cpu->addToCycles(6);
+    break;
+  case IDX1_POST:
+    offset = cpu->getMemWord(operand) + cpu->Y();
+    cpu->addToCycles(6);
+    break;
+  case ABS:
+    offset = operand;
+    cpu->addToCycles(4);
+    cpu->incPC();
+    break;
+  case IDX2_X:
+    offset = static_cast<int16_t>(operand) + cpu->X();
+    cpu->addToCycles(5);
+    cpu->incPC();
+    break;
+  case IDX2_Y:
+    offset = static_cast<int16_t>(operand) + cpu->Y();
+    cpu->addToCycles(5);
+    cpu->incPC();
+    break;
+  default:
+    offset = 0;
+  }
+
+  *(memBase + offset) = cpu->A();
+
+  cpu->incPC(2);
+}
+
+void STX(Cpu *cpu, uint16_t operand, AddressMode mode)
+{
+  uint16_t offset = 0;
+  uint8_t *memBase = cpu->getMemBase();
+
+  switch(mode) {
+  case ZER:
+    offset = operand;
+    cpu->addToCycles(3);
+    break;
+  case IDX1:
+    offset = static_cast<int8_t>(operand) + cpu->Y();
+    cpu->addToCycles(4);
+    break;
+  case ABS:
+    offset = operand;
+    cpu->addToCycles(4);
+    cpu->incPC();
+    break;
+  default:
+    offset = 0;
+  }
+
+  *(memBase + offset) = cpu->X();
+
+  cpu->incPC(2);
+}
+
+void STY(Cpu *cpu, uint16_t operand, AddressMode mode)
+{
+  uint16_t offset = 0;
+  uint8_t *memBase = cpu->getMemBase();
+
+  switch(mode) {
+  case ZER:
+    offset = operand;
+    cpu->addToCycles(3);
+    break;
+  case IDX1:
+    offset = static_cast<int8_t>(operand) + cpu->X();
+    cpu->addToCycles(4);
+    break;
+  case ABS:
+    offset = operand;
+    cpu->addToCycles(4);
+    cpu->incPC();
+    break;
+  default:
+    offset = 0;
+  }
+
+  *(memBase + offset) = cpu->Y();
+
+  cpu->incPC(2);
+}
+
+uint8_t TAX(Cpu *cpu)
+{
+  cpu->setX(cpu->A());
+  cpu->X() & 0x80 ? cpu->setNegative() : cpu->clearNegative();
+  cpu->X() ? cpu->clearZero() : cpu->setZero();
+  cpu->addToCycles(2);
+  cpu->incPC();
+  return cpu->SR();
+}
+
+uint8_t TAY(Cpu *cpu)
+{
+  cpu->setY(cpu->A());
+  cpu->Y() & 0x80 ? cpu->setNegative() : cpu->clearNegative();
+  cpu->Y() ? cpu->clearZero() : cpu->setZero();
+  cpu->addToCycles(2);
+  cpu->incPC();
+  return cpu->SR();
+}
+
+uint8_t TSX(Cpu *cpu)
+{
+  cpu->setX(cpu->SP());
+  cpu->X() & 0x80 ? cpu->setNegative() : cpu->clearNegative();
+  cpu->X() ? cpu->clearZero() : cpu->setZero();
+  cpu->addToCycles(2);
+  cpu->incPC();
+  return cpu->SR();
+}
+
+uint8_t TXA(Cpu *cpu)
+{
+  cpu->setA(cpu->X());
+  cpu->A() & 0x80 ? cpu->setNegative() : cpu->clearNegative();
+  cpu->A() ? cpu->clearZero() : cpu->setZero();
+  cpu->addToCycles(2);
+  cpu->incPC();
+  return cpu->SR();
+}
+
+uint8_t TXS(Cpu *cpu)
+{
+  cpu->setSP(cpu->X());
+  cpu->SP() & 0x80 ? cpu->setNegative() : cpu->clearNegative();
+  cpu->SP() ? cpu->clearZero() : cpu->setZero();
+  cpu->addToCycles(2);
+  cpu->incPC();
+  return cpu->SR();
+}
+
+uint8_t TYA(Cpu *cpu)
+{
+  cpu->setA(cpu->Y());
+  cpu->A() & 0x80 ? cpu->setNegative() : cpu->clearNegative();
+  cpu->A() ? cpu->clearZero() : cpu->setZero();
+  cpu->addToCycles(2);
   cpu->incPC();
   return cpu->SR();
 }

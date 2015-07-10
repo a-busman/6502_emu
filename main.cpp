@@ -6,7 +6,12 @@
 
 int main(int argc, char *argv[]) {
   Cpu cpu;
-  cpu.setA(20);
-  ADC(&cpu, static_cast<uint8_t>(20), IMM);
+  cpu.setA(25);
+  ASL(&cpu);
+  STA(&cpu, 0, ZER);
+  ASL(&cpu);
+  ASL(&cpu);
+  CLC(&cpu);
+  ADC(&cpu, 0, ZER);
   std::cout << (int)cpu.A() << std::endl;
 }
