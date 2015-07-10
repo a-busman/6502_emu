@@ -4,7 +4,7 @@
 // Header file containing structure of the 6502 cpu
 //
 // Author: Alex Busman
-// Date: July 9, 2015
+// Date: July 10, 2015
 ///////////////////////////////////////////////////////////////////////////////
 #ifndef CPU_H
 #define CPU_H
@@ -32,6 +32,21 @@
 #define BREAK    4
 #define OVERFLOW 6
 #define NEGATIVE 7
+
+enum AddressMode {
+  ACC,
+  IMP,
+  IMM,
+  ZER,
+  ABS,
+  REL,
+  IND,
+  IDX1,
+  IDX2_X,
+  IDX2_Y,
+  IDX1_PRE,
+  IDX1_POST
+};
 
 class Cpu {
 public:
@@ -81,6 +96,8 @@ public:
   uint8_t V() const { return (_sr & OVERFLOW_MASK) >> OVERFLOW; }
   uint8_t N() const { return (_sr & NEGATIVE_MASK) >> NEGATIVE; }
 
+  uint64_t getCycles() const { return _cycles; }
+
   uint8_t* getMemBase() { return _mem; }
   uint8_t  getMemByte(uint16_t address) const { return _mem[address]; }
   uint16_t getMemWord(uint16_t address) const
@@ -123,6 +140,118 @@ public:
   uint8_t  SR()               const { return _sr; }
   uint64_t cycles()           const { return _cycles; }
   bool     interruptWaiting() const { return _interrupt; }
+
+  void ADC(uint16_t operand, AddressMode mode);
+
+  void AND(uint16_t operand, AddressMode mode);
+
+  void ASL(uint16_t operand, AddressMode mode);
+
+  void BCC(uint16_t operand, AddressMode mode);
+
+  void BCS(uint16_t operand, AddressMode mode);
+
+  void BEQ(uint16_t operand, AddressMode mode);
+
+  void BIT(uint16_t operand, AddressMode mode);
+
+  void BMI(uint16_t operand, AddressMode mode);
+
+  void BNE(uint16_t operand, AddressMode mode);
+
+  void BPL(uint16_t operand, AddressMode mode);
+
+  void BRK(uint16_t operand, AddressMode mode);
+
+  void BVC(uint16_t operand, AddressMode mode);
+
+  void BVS(uint16_t operand, AddressMode mode);
+
+  void CLC(uint16_t operand, AddressMode mode);
+
+  void CLD(uint16_t operand, AddressMode mode);
+
+  void CLI(uint16_t operand, AddressMode mode);
+
+  void CLV(uint16_t operand, AddressMode mode);
+
+  void CMP(uint16_t operand, AddressMode mode);
+
+  void CPX(uint16_t operand, AddressMode mode);
+
+  void CPY(uint16_t operand, AddressMode mode);
+
+  void DEC(uint16_t operand, AddressMode mode);
+
+  void DEX(uint16_t operand, AddressMode mode);
+
+  void DEY(uint16_t operand, AddressMode mode);
+
+  void EOR(uint16_t operand, AddressMode mode);
+
+  void INC(uint16_t operand, AddressMode mode);
+
+  void INX(uint16_t operand, AddressMode mode);
+
+  void INY(uint16_t operand, AddressMode mode);
+
+  void JMP(uint16_t operand, AddressMode mode);
+
+  void JSR(uint16_t operand, AddressMode mode);
+
+  void LDA(uint16_t operand, AddressMode mode);
+
+  void LDX(uint16_t operand, AddressMode mode);
+
+  void LDY(uint16_t operand, AddressMode mode);
+
+  void LSR(uint16_t operand, AddressMode mode);
+
+  void NOP(uint16_t operand, AddressMode mode);
+
+  void ORA(uint16_t operand, AddressMode mode);
+
+  void PHA(uint16_t operand, AddressMode mode);
+
+  void PHP(uint16_t operand, AddressMode mode);
+
+  void PLA(uint16_t operand, AddressMode mode);
+
+  void PLP(uint16_t operand, AddressMode mode);
+
+  void ROL(uint16_t operand, AddressMode mode);
+
+  void ROR(uint16_t operand, AddressMode mode);
+
+  void RTI(uint16_t operand, AddressMode mode);
+
+  void RTS(uint16_t operand, AddressMode mode);
+
+  void SBC(uint16_t operand, AddressMode mode);
+
+  void SEC(uint16_t operand, AddressMode mode);
+
+  void SED(uint16_t operand, AddressMode mode);
+
+  void SEI(uint16_t operand, AddressMode mode);
+
+  void STA(uint16_t operand, AddressMode mode);
+
+  void STX(uint16_t operand, AddressMode mode);
+
+  void STY(uint16_t operand, AddressMode mode);
+
+  void TAX(uint16_t operand, AddressMode mode);
+
+  void TAY(uint16_t operand, AddressMode mode);
+
+  void TSX(uint16_t operand, AddressMode mode);
+
+  void TXA(uint16_t operand, AddressMode mode);
+
+  void TXS(uint16_t operand, AddressMode mode);
+
+  void TYA(uint16_t operand, AddressMode mode);
 
 private:
   // Accumulator

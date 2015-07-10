@@ -3,7 +3,7 @@ CFLAGS = -g -Wall -std=c++11
 TARGET = emu
 
 CPLUSPLUSSRC = main.cpp \
-               operations.cpp
+               cpu.cpp
 
 SRC = $(CPLUSPLUSSRC)
 all: $(TARGET)
