@@ -2,10 +2,14 @@ CC = g++
 CFLAGS = -g -Wall -std=c++11
 TARGET = emu
 
+CPLUSPLUSSRC = main.cpp \
+               operations.cpp
+
+SRC = $(CPLUSPLUSSRC)
 all: $(TARGET)
 
-$(TARGET): main.cpp
-	$(CC) $(CFLAGS) -o $(TARGET) main.cpp
+$(TARGET): $(SRC)
+	$(CC) $(CFLAGS) -o $(TARGET) $(SRC)
 
 clean:
 	$(RM) $(TARGET)
