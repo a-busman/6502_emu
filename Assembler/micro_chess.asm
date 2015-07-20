@@ -837,8 +837,7 @@ PrintDig       PHY                     ;  prints A hex nibble (low 4 bits)
                jmp   syschout          ;
 
 Hexdigdata	.byte	"0123456789ABCDEF"
-banner		.byte	"MicroChess (c) 1996-2002 Peter Jennings,
-peterj@benlo.com"
+banner		.byte	"MicroChess (c) 1996-2002 Peter Jennings, peterj@benlo.com"
 		.byte	$0d, $0a, $00
 cpl		.byte	"WWWWWWWWWWWWWWWWBBBBBBBBBBBBBBBBWWWWWWWWWWWWWWWW"
 cph		.byte	"KQCCBBRRPPPPPPPPKQCCBBRRPPPPPPPP"

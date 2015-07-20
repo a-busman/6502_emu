@@ -12,11 +12,12 @@ Line parseLine(string line)
   string buf;
   stringstream ss(line);
 
+  parsedLine.label = "";
+  parsedLine.operation = "";
+  parsedLine.operand = "";
+  parsedLine.comment = "";
+
   if (!line.compare("")) {
-    parsedLine.label = "";
-    parsedLine.operation = "";
-    parsedLine.operand = "";
-    parsedLine.comment = "";
     return parsedLine;
   }
 
@@ -24,94 +25,112 @@ Line parseLine(string line)
   while (ss >> buf) {
     tokens.push_back(buf);
   }
+
   // If starts with whitespace, there is no label
   if (line.at(0) == ' ' || line.at(0) == '\t') {
     parsedLine.label = "";
-    bool comment = false;
+    bool isComment = false;
+    bool isString = false;
+    bool isList = false;
+    char openString = '\0';
     for (int i = 0; i < tokens.size(); i++) {
-      if (comment) {
+      if (isComment) {
         parsedLine.comment += " " + tokens.at(i);
+      } else if (isString) {
+        parsedLine.operand += " " + tokens.at(i);
+        if (tokens.at(i).at(0) == openString ||
+            tokens.at(i).at(tokens.at(i).size() - 1) == openString) {
+          openString = '\0';
+          isString = false;
+          continue;
+        }
+      } else if (isList) {
+        parsedLine.operand += " " + tokens.at(i);
+        if (tokens.at(i).at(tokens.at(i).size() - 1) != ',') {
+          isList = false;
+          continue;
+        }
       } else {
+        if (tokens.at(i).at(0) == ';') {
+            parsedLine.comment = tokens.at(i);
+            isComment = true;
+            continue;
+        }
         switch (i) {
         case 0:
-          if (tokens.at(i).at(0) == ';') {
-            parsedLine.operation = "";
-            parsedLine.operand = "";
-            parsedLine.comment = tokens.at(i);
-            comment = true;
-          } else {
-            parsedLine.operation = tokens.at(i);
-          }
+          parsedLine.operation = tokens.at(i);
           break;
         case 1:
-          if (tokens.at(i).at(0) == ';') {
-            parsedLine.operand = "";
-            parsedLine.comment = tokens.at(i);
-            comment = true;
-          } else {
-            parsedLine.operand = tokens.at(i);
-          }
-          break;
-        case 2:
-          if (tokens.at(i).at(0) == ';') {
-            parsedLine.comment = tokens.at(i);
-            comment = true;
-          } else {
-            throw syntaxError;
+          parsedLine.operand = tokens.at(i);
+          if (tokens.at(i).at(0) == '\'' &&
+              tokens.at(i).at(tokens.at(i).size() - 1) != '\'') {
+            openString = '\'';
+            isString = true;
+          } else if (tokens.at(i).at(0) == '\"' &&
+                     tokens.at(i).at(tokens.at(i).size() - 1) != '\"') {
+            openString = '\"';
+            isString = true;
+          } else if (tokens.at(i).at(tokens.at(i).size() - 1) == ',') {
+            isList = true;
           }
           break;
         default:
+          cout << "No label " << i << endl;
           throw syntaxError;
         }
       }
     }
   } else {
-    bool comment = false;
+    bool isComment = false;
+    bool isString = false;
+    bool isList = false;
+    char openString = '\0';
     for (int i = 0; i < tokens.size(); i++) {
-      if (comment) {
+      if (isComment) {
         parsedLine.comment += " " + tokens.at(i);
+      } else if (isString) {
+        parsedLine.operand += " " + tokens.at(i);
+        if (tokens.at(i).at(0) == openString ||
+            tokens.at(i).at(tokens.at(i).size() - 1) == openString) {
+          openString = '\0';
+          isString = false;
+          continue;
+        }
+      } else if (isList) {
+        parsedLine.operand += " " + tokens.at(i);
+        if (tokens.at(i).at(tokens.at(i).size() - 1) != ',') {
+          isList = false;
+          continue;
+        }
       } else {
+        if (tokens.at(i).at(0) == ';') {
+          parsedLine.comment = tokens.at(i);
+          isComment = true;
+          continue;
+        }
         switch (i) {
         case 0:
-          if (tokens.at(i).at(0) == ';') {
-            parsedLine.label = "";
-            parsedLine.operation = "";
-            parsedLine.operand = "";
-            parsedLine.comment = tokens.at(i);
-            comment = true;
-          } else {
-            parsedLine.label = tokens.at(i);
-          }
+          parsedLine.label = tokens.at(i);
           break;
         case 1:
-          if (tokens.at(i).at(0) == ';') {
-            parsedLine.operation = "";
-            parsedLine.operand = "";
-            parsedLine.comment = tokens.at(i);
-            comment = true;
-          } else {
-            parsedLine.operation = tokens.at(i);
-          }
+          parsedLine.operation = tokens.at(i);
           break;
         case 2:
-          if (tokens.at(i).at(0) == ';') {
-            parsedLine.operand = "";
-            parsedLine.comment = tokens.at(i);
-            comment = true;
-          } else {
-            parsedLine.operand = tokens.at(i);
-          }
-          break;
-        case 3:
-          if (tokens.at(i).at(0) == ';') {
-            parsedLine.comment = tokens.at(i);
-            comment = true;
-          } else {
-            cout << "Final token not comment" << endl;
-            throw syntaxError;
+          parsedLine.operand = tokens.at(i);
+          if (tokens.at(i).at(0) == '\'' &&
+              tokens.at(i).at(tokens.at(i).size() - 1) != '\'') {
+            openString = '\'';
+            isString = true;
+          } else if (tokens.at(i).at(0) == '\"' &&
+                     tokens.at(i).at(tokens.at(i).size() - 1) != '\"') {
+            openString = '\"';
+            isString = true;
+          } else if (tokens.at(i).at(tokens.at(i).size() - 1) == ',') {
+            isList = true;
           }
           break;
         default:
+          cout << i << endl;
           throw syntaxError;
         }
       }
