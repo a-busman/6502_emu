@@ -1,4 +1,5 @@
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 #include <string>
 
@@ -23,7 +24,8 @@ int main(int argc, char *argv[])
       std::cout << "operation: " << myLine.operation   << std::endl;
       std::cout << "operand:   " << myLine.operand     << std::endl;
       std::cout << "comment:   " << myLine.comment     << std::endl;
-      std::cout << "opcode:    " << int(myLine.opcode) << std::endl;
+      std::cout << "opcode:    " << std::hex << std::uppercase;
+      std::cout << int(myLine.opcode) << std::endl;
       std::cout << std::endl;
     }
   } else {

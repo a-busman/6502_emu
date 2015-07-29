@@ -1,5 +1,7 @@
 #include <vector>
 #include <sstream>
+#include <cwctype>
+#include <clocale>
 
 #include <iostream>
 
@@ -55,6 +57,9 @@ Parser::Parser()
 
   currentOperation = "bpl";
   _operationMap[currentOperation][REL] = 0x10;
+
+  currentOperation = "bra";
+  _operationMap[currentOperation][REL] = 0x80;
 
   currentOperation = "brk";
   _operationMap[currentOperation][IMP] = 0x00;
@@ -188,11 +193,23 @@ Parser::Parser()
   currentOperation = "php";
   _operationMap[currentOperation][IMP] = 0x08;
 
+  currentOperation = "phx";
+  _operationMap[currentOperation][IMP] = 0xDA;
+
+  currentOperation = "phy";
+  _operationMap[currentOperation][IMP] = 0x5A;
+
   currentOperation = "pla";
   _operationMap[currentOperation][IMP] = 0x68;
 
   currentOperation = "plp";
   _operationMap[currentOperation][IMP] = 0x28;
+
+  currentOperation = "plx";
+  _operationMap[currentOperation][IMP] = 0xFA;
+
+  currentOperation = "ply";
+  _operationMap[currentOperation][IMP] = 0x7A;
 
   currentOperation = "rol";
   _operationMap[currentOperation][ACC]    = 0x2A;
@@ -252,11 +269,25 @@ Parser::Parser()
   _operationMap[currentOperation][ABS]  = 0x8C;
   _operationMap[currentOperation][IDX1] = 0x94;
 
+  currentOperation = "stz";
+  _operationMap[currentOperation][ZER]    = 0x64;
+  _operationMap[currentOperation][ABS]    = 0x9C;
+  _operationMap[currentOperation][IDX1]   = 0x74;
+  _operationMap[currentOperation][IDX2_X] = 0x9E;
+
   currentOperation = "tax";
   _operationMap[currentOperation][IMP] = 0xAA;
 
   currentOperation = "tay";
   _operationMap[currentOperation][IMP] = 0xA8;
+
+  currentOperation = "trb";
+  _operationMap[currentOperation][ZER] = 0x14;
+  _operationMap[currentOperation][ABS] = 0x1C;
+
+  currentOperation = "tsb";
+  _operationMap[currentOperation][ZER] = 0x04;
+  _operationMap[currentOperation][ABS] = 0x0C;
 
   currentOperation = "tsx";
   _operationMap[currentOperation][IMP] = 0xBA;
@@ -402,6 +433,13 @@ Parser::Line Parser::parseLine(string line)
         }
       }
     }
+  }
+  if (parsedLine.operand == "" && parsedLine.operation != "") {
+    string tempString = parsedLine.operation;
+    for (int i = 0; i < 3; i++) {
+      tempString[i] = tolower(tempString[i]);
+    }
+    parsedLine.opcode = _operationMap[tempString][IMP];
   }
   return parsedLine;
 }
